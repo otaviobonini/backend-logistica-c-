@@ -1,85 +1,87 @@
 # Modelo de domínio
 
-> No mínimo **3 entidades** e pelo menos **um relacionamento**. As linhas marcadas com *(exemplo)* mostram o nível de detalhe esperado: apague e escreva as do grupo.
+O sistema tem três entidades: Veiculo, Motorista e Entrega. Cada entrega pertence a um veículo e a um motorista.
 
 ## Entidades
 
-Uma tabela por entidade. A coluna **Regra** é o que vira `NOT NULL`, `UNIQUE` ou validação no DTO.
+### Veiculo
 
-### Livro *(exemplo)*
+Veículo da frota. A capacidade é usada na regra R1.
 
-Um exemplar do acervo que pode ser emprestado.
+| Atributo | Tipo C# | Coluna | Obrigatório | Observação |
+| `Id` | `long` | `id` | sim | Gerado pelo banco |
+| `Placa` | `string` | `placa` | sim | Até 10 caracteres |
+| `Modelo` | `string` | `modelo` | sim | Até 100 caracteres |
+| `CapacidadeKg` | `decimal` | `capacidade_kg` | sim | Maior que zero |
 
-| Atributo | Tipo Java | Coluna | Obrigatório | Regra |
-|---|---|---|---|---|
-| `id` | `Long` | `id` | sim | Gerado pelo banco |
-| `titulo` | `String` | `titulo` | sim | Até 255 caracteres |
-| `isbn` | `String` | `isbn` | sim | Até 20 caracteres. Não é único: exemplares do mesmo título repetem o ISBN |
-| `disponivel` | `boolean` | `disponivel` | sim | Nasce `true`; o cliente não controla |
+### Motorista
 
-### {{Entidade 2}}
+Motorista da transportadora. A validade da CNH é usada na regra R2.
 
-{{O que ela representa, em uma linha.}}
+| Atributo | Tipo C# | Coluna | Obrigatório | Observação |
+| `Id` | `long` | `id` | sim | Gerado pelo banco |
+| `Nome` | `string` | `nome` | sim | Até 150 caracteres |
+| `Cnh` | `string` | `cnh` | sim | Até 20 caracteres |
+| `ValidadeCnh` | `DateOnly` | `validade_cnh` | sim | Formato `yyyy-MM-dd` |
 
-| Atributo | Tipo Java | Coluna | Obrigatório | Regra |
-|---|---|---|---|---|
-| `id` | `Long` | `id` | sim | Gerado pelo banco |
-| ... | ... | ... | ... | ... |
+### Entrega
 
-### {{Entidade 3}}
+Carga levada por um veículo e um motorista até o destino.
 
-{{O que ela representa, em uma linha.}}
-
-| Atributo | Tipo Java | Coluna | Obrigatório | Regra |
-|---|---|---|---|---|
-| `id` | `Long` | `id` | sim | Gerado pelo banco |
-| ... | ... | ... | ... | ... |
+| Atributo | Tipo C# | Coluna | Obrigatório | Observação |
+| `Id` | `long` | `id` | sim | Gerado pelo banco |
+| `Descricao` | `string` | `descricao` | sim | Até 255 caracteres |
+| `Destino` | `string` | `destino` | sim | Até 255 caracteres |
+| `PesoKg` | `decimal` | `peso_kg` | sim | Maior que zero e não pode passar da capacidade do veículo (R1) |
+| `DataSaida` | `DateOnly` | `data_saida` | sim | A API preenche com o dia do cadastro |
+| `DataConclusao` | `DateOnly?` | `data_conclusao` | não | Fica vazia até a entrega ser concluída (R3) |
+| `VeiculoId` | `long` | `veiculo_id` | sim | Chave estrangeira para `veiculos` |
+| `MotoristaId` | `long` | `motorista_id` | sim | Chave estrangeira para `motoristas` |
 
 ## Relacionamentos
 
 | De | Para | Tipo | No banco | No código |
-|---|---|---|---|---|
-| Emprestimo *(exemplo)* | Leitor | muitos para um | `emprestimos.leitor_id` referencia `leitores(id)` | `@ManyToOne` em `Emprestimo` |
-| Emprestimo *(exemplo)* | Livro | muitos para um | `emprestimos.livro_id` referencia `livros(id)` | `@ManyToOne` em `Emprestimo` |
-| ... | ... | ... | ... | ... |
+| Entrega | Veiculo | muitos para um | `entregas.veiculo_id` referencia `veiculos(id)` | `VeiculoId` e `Veiculo` em `Entrega` |
+| Entrega | Motorista | muitos para um | `entregas.motorista_id` referencia `motoristas(id)` | `MotoristaId` e `Motorista` em `Entrega` |
+
+Um veículo ou motorista que já tem entrega não pode ser apagado (`ON DELETE RESTRICT`).
 
 ## Diagrama ER
 
-O GitHub desenha o bloco abaixo sozinho. Troque pelas tabelas do grupo, com os nomes das colunas como estarão no banco (`snake_case`).
-
 ```mermaid
 erDiagram
-    LEITORES ||--o{ EMPRESTIMOS : "faz"
-    LIVROS ||--o{ EMPRESTIMOS : "aparece em"
+    VEICULOS ||--o{ ENTREGAS : "faz"
+    MOTORISTAS ||--o{ ENTREGAS : "dirige"
 
-    LEITORES {
+    VEICULOS {
+        bigint id PK
+        varchar placa
+        varchar modelo
+        numeric capacidade_kg
+    }
+    MOTORISTAS {
         bigint id PK
         varchar nome
-        varchar email
+        varchar cnh
+        date validade_cnh
     }
-    LIVROS {
+    ENTREGAS {
         bigint id PK
-        varchar titulo
-        varchar isbn
-        boolean disponivel
-    }
-    EMPRESTIMOS {
-        bigint id PK
-        bigint leitor_id FK
-        bigint livro_id FK
-        date data_retirada
-        date data_devolucao
+        varchar descricao
+        varchar destino
+        numeric peso_kg
+        date data_saida
+        date data_conclusao
+        bigint veiculo_id FK
+        bigint motorista_id FK
     }
 ```
 
-Como ler: `||--o{` é "um para muitos". Um leitor faz zero ou vários empréstimos, e cada empréstimo é de exatamente um leitor.
-
 ## Migrations
 
-Todas existem em `src/main/resources/db/migration`, uma tabela por arquivo. A ordem importa: a tabela referenciada nasce antes da que referencia.
+Ficam em `Migrations/`, uma por tabela, e rodam em ordem quando a API sobe.
 
-| Versão | Arquivo | O que cria |
-|---|---|---|
-| V1 *(exemplo)* | `V1__criar_livros.sql` | Tabela `livros` |
-| V2 *(exemplo)* | `V2__criar_leitores.sql` | Tabela `leitores` |
-| V3 *(exemplo)* | `V3__criar_emprestimos.sql` | Tabela `emprestimos`, com as duas chaves estrangeiras |
+| Ordem | Arquivo | O que cria |
+| 1 | `20261010214223_CriarVeiculos.cs` | Tabela `veiculos` |
+| 2 | `20261010214236_CriarMotoristas.cs` | Tabela `motoristas` |
+| 3 | `20261010214245_CriarEntregas.cs` | Tabela `entregas`, com as duas chaves estrangeiras |
