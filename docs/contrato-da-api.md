@@ -1,75 +1,92 @@
 # Contrato da API
 
-> O contrato é o que o cliente da API enxerga: rotas, JSON e status. Desenhe as rotas de **todas** as entidades. Nesta etapa precisam funcionar as três da API simples e as que as regras de negócio usam. As linhas marcadas com *(exemplo)* mostram o nível de detalhe esperado: apague e escreva as do grupo.
+Este documento descreve o que o cliente enxerga: rotas, JSON e status.
 
 ## Convenções
 
 | Item | Valor |
-|---|---|
-| Endereço base | `http://localhost:8080` |
-| Formato | JSON, na requisição e na resposta |
+| Endereço base | `http://localhost:5080` |
+| Formato | JSON na requisição e na resposta |
 | Datas | `yyyy-MM-dd` |
-| Erros | Sempre no formato `ErroDTO` (ver [Erros](#erros)) |
-| Documentação viva | `http://localhost:8080/swagger-ui.html` |
+| Erros | Sempre no formato `ErroDTO` (veja [Erros](#erros)) |
+| Swagger | `http://localhost:5080/swagger` |
 
 ## Rotas
 
-Coluna **Funciona**: `sim` para as rotas que já respondem nesta etapa: as da API simples e as que as regras de negócio usam.
+A coluna **Funciona** diz se a rota já responde nesta etapa.
 
-### Livros *(exemplo)*
-
-| Verbo | Caminho | O que faz | Entrada | Saída | Sucesso | Erros | Funciona |
-|---|---|---|---|---|---|---|---|
-| `GET` | `/livros` | Lista os livros | Nenhuma | lista de `LivroResponseDTO` | `200` | Nenhum | sim |
-| `GET` | `/livros/{id}` | Busca um livro | Nenhuma | `LivroResponseDTO` | `200` | `404` | sim |
-| `POST` | `/livros` | Cadastra um livro | `LivroRequestDTO` | `LivroResponseDTO` | `201` | `400` | sim |
-| `PUT` | `/livros/{id}` | Atualiza um livro | `LivroRequestDTO` | `LivroResponseDTO` | `200` | `400`, `404` | não |
-| `DELETE` | `/livros/{id}` | Remove um livro | Nenhuma | Nenhuma (sem corpo) | `204` | `404` | não |
-
-### {{Recurso 2}}
+### Veículos
 
 | Verbo | Caminho | O que faz | Entrada | Saída | Sucesso | Erros | Funciona |
-|---|---|---|---|---|---|---|---|
-| ... | ... | ... | ... | ... | ... | ... | não |
+| `GET` | `/veiculos` | Lista os veículos | Nenhuma | lista de `VeiculoResponseDTO` | `200` | Nenhum | sim |
+| `GET` | `/veiculos/{id}` | Busca um veículo | Nenhuma | `VeiculoResponseDTO` | `200` | `404` | sim |
+| `POST` | `/veiculos` | Cadastra um veículo | `VeiculoRequestDTO` | `VeiculoResponseDTO` | `201` | `400` | sim |
+| `PUT` | `/veiculos/{id}` | Atualiza um veículo | `VeiculoRequestDTO` | `VeiculoResponseDTO` | `200` | `400`, `404` | não |
+| `DELETE` | `/veiculos/{id}` | Remove um veículo | Nenhuma | Sem corpo | `204` | `404` | não |
 
-### {{Recurso 3}}
+### Motoristas
 
 | Verbo | Caminho | O que faz | Entrada | Saída | Sucesso | Erros | Funciona |
-|---|---|---|---|---|---|---|---|
-| ... | ... | ... | ... | ... | ... | ... | não |
+| `GET` | `/motoristas` | Lista os motoristas | Nenhuma | lista de `MotoristaResponseDTO` | `200` | Nenhum | sim |
+| `GET` | `/motoristas/{id}` | Busca um motorista | Nenhuma | `MotoristaResponseDTO` | `200` | `404` | sim |
+| `POST` | `/motoristas` | Cadastra um motorista | `MotoristaRequestDTO` | `MotoristaResponseDTO` | `201` | `400` | sim |
+| `PUT` | `/motoristas/{id}` | Atualiza um motorista | `MotoristaRequestDTO` | `MotoristaResponseDTO` | `200` | `400`, `404` | não |
+| `DELETE` | `/motoristas/{id}` | Remove um motorista | Nenhuma | Sem corpo | `204` | `404` | não |
 
-### Rotas que não são CRUD
+### Entregas
 
-As que nascem das regras de negócio do README. Estas precisam funcionar nesta etapa.
-
-| Verbo | Caminho | O que faz | Regra | Sucesso | Erros |
-|---|---|---|---|---|---|
-| `POST` *(exemplo)* | `/emprestimos` | Registra um empréstimo e tira o livro da estante | R1 e R2 | `201` | `400`, `404` |
-| `PUT` *(exemplo)* | `/emprestimos/{id}/devolver` | Registra a devolução e libera o livro | R3 | `200` | `400`, `404` |
-| ... | ... | ... | ... | ... | ... |
+| Verbo | Caminho | O que faz | Entrada | Saída | Sucesso | Erros | Funciona |
+| `POST` | `/entregas` | Registra a saída de uma entrega (R1, R2 e R3) | `EntregaRequestDTO` | `EntregaResponseDTO` | `201` | `400`, `404` | sim |
+| `GET` | `/entregas/{id}` | Busca uma entrega | Nenhuma | `EntregaResponseDTO` | `200` | `404` | sim |
+| `PUT` | `/entregas/{id}/concluir` | Conclui a entrega e libera o veículo (R3) | Nenhuma | `EntregaResponseDTO` | `200` | `400`, `404` | sim |
+| `GET` | `/entregas` | Lista as entregas | Nenhuma | lista de `EntregaResponseDTO` | `200` | Nenhum | não |
 
 ## DTOs
 
-O que entra não é igual ao que sai: o cliente não envia `id` nem campos que a API decide.
+O cliente nunca envia `id` nem os campos que a API decide (como `dataSaida`).
 
 | DTO | Direção | Campos | Validações |
-|---|---|---|---|
-| `LivroRequestDTO` *(exemplo)* | entrada | `titulo`, `isbn` | os dois obrigatórios (`@NotBlank`) |
-| `LivroResponseDTO` *(exemplo)* | saída | `id`, `titulo`, `isbn`, `disponivel` | Nenhuma |
-| ... | ... | ... | ... |
+| `VeiculoRequestDTO` | entrada | `placa`, `modelo`, `capacidadeKg` | `placa` e `modelo` obrigatórios; `capacidadeKg` maior que zero |
+| `VeiculoResponseDTO` | saída | `id`, `placa`, `modelo`, `capacidadeKg` | Nenhuma |
+| `MotoristaRequestDTO` | entrada | `nome`, `cnh`, `validadeCnh` | os três obrigatórios |
+| `MotoristaResponseDTO` | saída | `id`, `nome`, `cnh`, `validadeCnh` | Nenhuma |
+| `EntregaRequestDTO` | entrada | `descricao`, `destino`, `pesoKg`, `veiculoId`, `motoristaId` | `descricao`, `destino`, `veiculoId` e `motoristaId` obrigatórios; `pesoKg` maior que zero |
+| `EntregaResponseDTO` | saída | `id`, `descricao`, `destino`, `pesoKg`, `dataSaida`, `dataConclusao`, `emAndamento`, `veiculo`, `motorista` | Nenhuma |
 
 ## Exemplos
 
-Um par requisição/resposta por entidade.
-
-### `POST /livros` *(exemplo)*
+### `POST /veiculos`
 
 Requisição:
 
 ```json
 {
-  "titulo": "Dom Casmurro",
-  "isbn": "978-85-359-0277-5"
+  "placa": "XYZ9K88",
+  "modelo": "Fiat Fiorino",
+  "capacidadeKg": 650
+}
+```
+
+Resposta, `201 Created`:
+
+```json
+{
+  "id": 2,
+  "placa": "XYZ9K88",
+  "modelo": "Fiat Fiorino",
+  "capacidadeKg": 650
+}
+```
+
+### `POST /motoristas`
+
+Requisição:
+
+```json
+{
+  "nome": "Carlos Pereira",
+  "cnh": "12345678900",
+  "validadeCnh": "2028-05-10"
 }
 ```
 
@@ -78,31 +95,64 @@ Resposta, `201 Created`:
 ```json
 {
   "id": 1,
-  "titulo": "Dom Casmurro",
-  "isbn": "978-85-359-0277-5",
-  "disponivel": true
+  "nome": "Carlos Pereira",
+  "cnh": "12345678900",
+  "validadeCnh": "2028-05-10"
 }
 ```
 
+### `POST /entregas`
+
+Requisição:
+
+```json
+{
+  "descricao": "Cimento CP II, 6 sacos",
+  "destino": "Rua Henrique Lage, 500, Criciúma",
+  "pesoKg": 300,
+  "veiculoId": 2,
+  "motoristaId": 1
+}
+```
+
+Resposta, `201 Created`:
+
+```json
+{
+  "id": 1,
+  "descricao": "Cimento CP II, 6 sacos",
+  "destino": "Rua Henrique Lage, 500, Criciúma",
+  "pesoKg": 300,
+  "dataSaida": "2026-10-10",
+  "dataConclusao": null,
+  "emAndamento": true,
+  "veiculo": { "id": 2, "placa": "XYZ9K88", "modelo": "Fiat Fiorino", "capacidadeKg": 650.00 },
+  "motorista": { "id": 1, "nome": "Carlos Pereira", "cnh": "12345678900", "validadeCnh": "2028-05-10" }
+}
+```
+
+### `PUT /entregas/1/concluir`
+
+Não tem corpo. Responde `200` com a mesma entrega, agora com `dataConclusao` preenchida e `emAndamento` falso.
+
 ## Erros
 
-Todo erro sai no mesmo formato. Este é o `404` de `GET /livros/999`:
+Todo erro sai no mesmo formato. Exemplo de `GET /veiculos/999`:
 
 ```json
 {
   "status": 404,
   "erro": "Not Found",
-  "mensagem": "Livro não encontrado: 999",
-  "caminho": "/livros/999",
-  "timestamp": "2026-10-06T19:30:00",
+  "mensagem": "Veículo não encontrado: 999",
+  "caminho": "/veiculos/999",
+  "timestamp": "2026-10-10T21:43:46",
   "campos": []
 }
 ```
 
-No `400` de validação, a lista `campos` traz um item por campo inválido: `{"campo": "titulo", "mensagem": "Título é obrigatório"}`.
+No `400` de validação, a lista `campos` traz um item por campo inválido, por exemplo `{"campo": "placa", "mensagem": "Placa é obrigatória"}`.
 
-| Status | Quando acontece neste projeto |
-|---|---|
-| `400` | JSON ilegível ou campo inválido no DTO de entrada |
-| `404` | Id que não existe |
-| `400` | Regra de negócio violada: a `mensagem` diz qual regra barrou o pedido |
+| Status | Quando acontece |
+| `400` | JSON ilegível, data fora do formato ou campo inválido |
+| `400` | Regra de negócio violada: a mensagem começa com R1, R2 ou R3 e explica a regra |
+| `404` | Id de veículo, motorista ou entrega que não existe |
